@@ -1,0 +1,11 @@
+body{background-color: #f2f2f2}
+#wrapper{width: 600px margin: auto}
+#username{background-color: transparent; border: solid 1px black}
+#left, #right:{min-height: 300px}
+#left{width: 30%; float:left; background-color: #005b58}
+#right{width: 70%; float:right; background-color: #0e8ef7}
+#leftTitle{border: solid 1px black; padding: 5px; text-align: center; font-weight: bold}
+#leftContent{border: solid 1px black; border-top: none; padding: 5px; text-align: center}
+#rightTitle{text-align: right}
+#rightContent{height: 200px; background-color: #2b9fff; margin-bottom: 15px}
+#message{background-color: transparent; border: solid 1px black}

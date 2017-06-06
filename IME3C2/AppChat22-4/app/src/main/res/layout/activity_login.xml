@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_login"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    tools:context="vn.edu.uit.lehuutai.appchat16_4.Login">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp"
+        android:layout_gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:text="Welcome to\nanonymous messaging app"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            android:id="@+id/tv_welcome"
+            android:textColor="@color/colorPrimaryDark"
+            android:textAlignment="center"
+            android:textAllCaps="true"
+            android:textStyle="normal|bold"
+            android:textSize="24sp" />
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="20dp"
+            android:layout_gravity="center">
+
+            <TextView
+                android:text="Click Here\nUpload Avatar"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:id="@+id/tv_choose_photo"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:textSize="12sp" />
+
+            <ImageView
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_gravity="center"
+                android:id="@+id/img_avatar"
+                android:background="@android:drawable/gallery_thumb"
+                android:scaleType="fitXY"
+                android:contentDescription="Upload Avatar" />
+        </RelativeLayout>
+
+        <EditText
+            android:id="@+id/username_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="What's your nickname?"
+            android:imeActionId="@+id/login"
+            android:imeActionLabel="Login"
+            android:imeOptions="actionUnspecified"
+            android:inputType="textPersonName"
+            android:maxLength="14"
+            android:maxLines="1"
+            android:textAlignment="center" />
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="3dp"
+                android:textSize="10sp"
+                android:id="@+id/tv_delete_conversation" />
+
+            <org.adw.library.widgets.discreteseekbar.DiscreteSeekBar
+                android:id="@+id/seekBar_delete_conversation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:dsb_thumbSize="10dp"
+                app:dsb_min="1"
+                app:dsb_max="30"
+                app:dsb_value="5"/>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/sign_in_button"
+            style="?android:textAppearanceSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorBackground"
+            android:layout_marginTop="16dp"
+            android:text="Login"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textSize="18dp"/>
+
+    </LinearLayout>
+
+</ScrollView>

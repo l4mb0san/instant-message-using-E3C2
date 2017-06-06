@@ -1,0 +1,31 @@
+﻿- Không dùng chat room.
+- Không lưu tin nhắn trên server.
+- Chat private giữa 2 người thành công.
+- Hiển thị thông báo có người nhắn khi đang ở form "List of members".
+- Đã cập nhật số lượng tin nhắn khi có người nhắn đến.
+- Đã xóa tên mình ra khỏi danh sách những người trực tuyến.
+- Đã trao đổi secret key.
+- Đã mã hóa với secret key thành công.
+- Đã cập nhật phần disconnected.
+- Đã cập nhật xóa toàn bộ tin nhắn của cả List trong một khoảng thời gian.
+- Login -> List: hiển thị các danh sách users có trong usersList lên userAdapter
+- List phải cập nhật user mới thêm vào usersList và hiển thị nó lên lên userAdapter
+- Chat phải cập nhật user mới thêm vào usersList
+- Chat -> List: cập nhật lại userAdapter
+- Thiết lập lại background notification thành > khi nhấn
+- Đã sửa lại thành dạng chỉ cập nhật khi có người kết nối đến server, chứ không dùng cách đẩy cả mảng danh sách từ server xuống nữa.
+- Khi sửa lại không đổ mảng vào displayMessage, thì việc tự động xóa sẽ không bị ảnh hưởng khi còn đang trong chat, khi nào hết time mà người dùng thoát giao diện Chat Private thì những tin nhắn cũ sẽ mất.
+- Update giao diện List và Chat
+- Update giao diện Chat dạng "Bubble"
+- Đã loại bỏ tính điểm Q trong button "Send" chuyển sang luồng.
+- Đã tạo một luồng đồng bộ để tính điểm Q - nếu Q chưa tính xong thì khung chat sẽ ở trạng thái ẩn - setEnable(false).
+- Đã xóa mảng message cho từng cá nhân chứ không xóa tất cả.
+- Bắt sự kiện enter và không gửi nếu rỗng ở ChatActivity.
+
+
+-------------------RẮC RỐI ĐANG GIẢI QUYẾT-------------------
+- Nếu Q(-1, -1) hoặc secretkey == null thì phải tính toán và trao đổi lại. (cái này có vẻ căng)
+- Nếu đang chat mất kết nối thì phải làm sao?
+- Có thể tạo Map để lưu Q.
+- Tại sao connect nhanh mà disconnect lại chậm (cần làm một button logout để kiểm chứng nhanh chậm)
+- Thay thế radionButton thành Seekbar để đẹp hơn
