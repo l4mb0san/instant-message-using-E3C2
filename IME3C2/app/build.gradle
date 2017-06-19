@@ -46,4 +46,5 @@ dependencies {
     compile 'com.android.support:design:25.3.1'
     compile 'com.github.Hitomis:CircleMenu:v1.0.0'
     compile 'com.oguzdev:CircularFloatingActionMenu:1.0.2'
+    compile 'pl.droidsonroids.gif:android-gif-drawable:1.2.7'
 }

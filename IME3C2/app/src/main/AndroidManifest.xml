@@ -24,7 +24,6 @@
         <activity android:name=".List" />
         <activity android:name=".Chat" />
         <activity android:name=".Gallery" />
-        <activity android:name=".Test"></activity>
     </application>
 
 </manifest>

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -42,6 +43,7 @@ public class Login extends AppCompatActivity {
 
     TextView tvChoosePhoto;
     TextView tvDeleteConversation;
+    TextView tvLoginStatus;
     ImageView imgAvatar;
     EditText inputUsername;
     Button btnLogin;
@@ -62,6 +64,7 @@ public class Login extends AppCompatActivity {
 
         //Login vào server
         mSocket.on("login", onLogin);
+        mSocket.on("login-status", onLoginStatus);
 
         Constants.notify = new HashMap<String, Integer>();
         Constants.message = new HashMap<String, ArrayList<Message>>();
@@ -69,6 +72,7 @@ public class Login extends AppCompatActivity {
         Constants.userList = new ArrayList<User>();
         Constants.isTimerRunning = new HashMap<String, Boolean>();
         Constants.countDownTimer = new HashMap<String, CountDownTimer>();
+        Constants.Q = new HashMap<>();
 
         tvChoosePhoto = (TextView) findViewById(R.id.tv_choose_photo);
         tvDeleteConversation = (TextView) findViewById(R.id.tv_delete_conversation);
@@ -76,12 +80,14 @@ public class Login extends AppCompatActivity {
         inputUsername = (EditText) findViewById(R.id.username_input);
         btnLogin = (Button) findViewById(R.id.sign_in_button);
         seekBar = (DiscreteSeekBar) findViewById(R.id.seekBar_delete_conversation);
+        tvLoginStatus = (TextView) findViewById(R.id.tv_status_login);
 
         timeDelete(1);
         inputUsername.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                    tvLoginStatus.setVisibility(View.INVISIBLE);
                     attemptLogin();
                     return true;
                 }
@@ -193,6 +199,33 @@ public class Login extends AppCompatActivity {
                         intent.putExtra("username", SOCKETID);
                         startActivity(intent);
                         finish();
+                    } catch (JSONException e) {
+                        return;
+                    }
+                }
+            });
+        }
+    };
+
+    //---------------------------------------------------------------------------
+    private Emitter.Listener onLoginStatus = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    Boolean status;
+
+                    try {
+                        status = data.getBoolean("status");
+                        if(status == true){
+                            tvLoginStatus.setText("Success");
+                        }else{
+                            tvLoginStatus.setText("Someone used this name.\nPlease choose a cooler name");
+                        }
+                        tvLoginStatus.setVisibility(View.VISIBLE);
+
                     } catch (JSONException e) {
                         return;
                     }

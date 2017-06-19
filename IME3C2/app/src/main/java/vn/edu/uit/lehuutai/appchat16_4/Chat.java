@@ -3,8 +3,8 @@ package vn.edu.uit.lehuutai.appchat16_4;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.KeyEvent;
@@ -13,7 +13,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ListView;
@@ -39,7 +38,6 @@ import java.util.Map;
 
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.Chat.Message;
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.Chat.MessageAdapter;
-import vn.edu.uit.lehuutai.appchat16_4.Adapter.Gallery.Image;
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.List.User;
 import vn.edu.uit.lehuutai.appchat16_4.Crypto.EllipticCurve;
 import vn.edu.uit.lehuutai.appchat16_4.Crypto.Point;
@@ -54,21 +52,19 @@ public class Chat extends AppCompatActivity {
     private MessageAdapter messageAdapter;
     private String reciever, reciever_name, sender, avatar;
     private Map<String, BigInteger> privateKey;
+    private boolean pressTwice = false;
 
-    Handler handler = new Handler();
     Protocols protocols = new Protocols();
     EllipticCurve E;
-    Point P, Q = null;
-    myAsyncTask computeQPoint;
-    boolean hide = true;
+    Point P;
 
     ListView display;
     EditText inputMessage;
     ImageButton send;
     ProgressBar progressBar;
-    TextView userLeftNotification;
+    TextView userLeftNotification, newMessageNameSender, newMessageContent;
     CircleMenu circleMenu;
-    RelativeLayout relativeLayoutMenu;
+    RelativeLayout relativeLayoutMenu, relativeLayoutNewMessage;
 
 
     @Override
@@ -118,6 +114,37 @@ public class Chat extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if(pressTwice == true){
+            mSocket.disconnect();
+            Constants.message.clear();
+            Constants.notify.clear();
+            Constants.secretkey.clear();
+            Constants.Q.clear();
+            for(User u : Constants.userList){
+                cancelCountDownTimer(u.getuSocketID());
+            }
+            Constants.countDownTimer.clear();
+            Constants.isTimerRunning.clear();
+            Constants.userList.clear();
+            finish();
+            System.exit(0);
+        }
+        pressTwice = true;
+        Toast.makeText(this, "Press BACK button again to exit", Toast.LENGTH_LONG).show();
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                pressTwice = false;
+                Intent intent = new Intent(Chat.this, List.class);
+                intent.putExtra("username", sender);
+                startActivity(intent);
+                finish();
+            }
+        }, 1000);
+    }
+
     //----------------------------------------------------------------------------------------
     private void bundle(){
         Intent intent = this.getIntent();
@@ -152,19 +179,26 @@ public class Chat extends AppCompatActivity {
         userLeftNotification = (TextView) findViewById(R.id.tv_userLeft);
         circleMenu = (CircleMenu) findViewById(R.id.circle_menu);
         relativeLayoutMenu = (RelativeLayout) findViewById(R.id.RelativeLayoutMenu);
+        relativeLayoutNewMessage = (RelativeLayout) findViewById(R.id.layout_new_message);
+        newMessageNameSender = (TextView) findViewById(R.id.tv_new_message_name_sender);
+        newMessageContent = (TextView) findViewById(R.id.tv_new_message_content);
 
         setTitle(reciever_name);
+        display.setEnabled(false);
+        inputMessage.setEnabled(false);
+        send.setEnabled(false);
+        display.setBackground(getResources().getDrawable(R.color.dsb_disabled_color));
         messageChat = new ArrayList<Message>();
         privateKey = new HashMap<String, BigInteger>();
         E = Constants.E;
         P = Constants.P;
-        display.setEnabled(false);
-        inputMessage.setEnabled(false);
-        send.setEnabled(false);
-        computeQPoint = new myAsyncTask();
-        computeQPoint.execute();
         loadDummyHistory();
         Menu();
+        display.setEnabled(true);
+        inputMessage.setEnabled(true);
+        send.setEnabled(true);
+        display.setBackground(getResources().getDrawable(android.R.color.white));
+        progressBar.setVisibility(View.GONE);
     }
 
     //----------------------------------------------------------------------------------------
@@ -208,7 +242,18 @@ public class Chat extends AppCompatActivity {
                 switch (index) {
                     case 0:
                         mSocket.disconnect();
-                        finishAndRemoveTask();
+                        Constants.message.clear();
+                        Constants.notify.clear();
+                        Constants.secretkey.clear();
+                        Constants.Q.clear();
+                        for(User u : Constants.userList){
+                            cancelCountDownTimer(u.getuSocketID());
+                        }
+                        Constants.countDownTimer.clear();
+                        Constants.isTimerRunning.clear();
+                        Constants.userList.clear();
+                        finish();
+                        System.exit(0);
                         break;
                     case 1:
                         Intent intent1 = new Intent(Chat.this, List.class);
@@ -218,6 +263,16 @@ public class Chat extends AppCompatActivity {
                         break;
                     case 2:
                         mSocket.disconnect();
+                        Constants.message.clear();
+                        Constants.notify.clear();
+                        Constants.secretkey.clear();
+                        Constants.Q.clear();
+                        for(User u : Constants.userList){
+                            cancelCountDownTimer(u.getuSocketID());
+                        }
+                        Constants.countDownTimer.clear();
+                        Constants.isTimerRunning.clear();
+                        Constants.userList.clear();
                         Intent intent2 = new Intent(Chat.this, Login.class);
                         startActivity(intent2);
                         finish();
@@ -237,12 +292,10 @@ public class Chat extends AppCompatActivity {
         relativeLayoutMenu.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
-                if (hide) {
+                if (circleMenu.getVisibility() == View.INVISIBLE) {
                     circleMenu.setVisibility(View.VISIBLE);
-                    hide = false;
                 } else {
                     circleMenu.setVisibility(View.INVISIBLE);
-                    hide = true;
                 }
                 return true;
             }
@@ -260,14 +313,13 @@ public class Chat extends AppCompatActivity {
 
     //----------------------------------------------------------------------------------------
     private void attempSend(){
-        //Kiểm tra xem luồng xử lý điểm Q có được hủy chưa, chưa thì hủy
-        if (!computeQPoint.isCancelled()) {
-            computeQPoint.cancel(true);
+        if(Constants.Q.get(reciever) == null) {
+            Toast.makeText(getApplicationContext(), "Not Exchange Secret-key", Toast.LENGTH_LONG).show();
         }
         String _message = inputMessage.getText().toString();
         if (!_message.isEmpty()) {
             //Phần mã hóa tin nhắn
-            String[] CipherText = protocols.Encrypt(E, P, Q, _message);
+            String[] CipherText = protocols.Encrypt(E, P, Constants.Q.get(reciever), _message);
             String encryptedMessage = "";
             int i = 1;
             for (String s : CipherText) {
@@ -297,44 +349,6 @@ public class Chat extends AppCompatActivity {
             messageChat.add(new Message(avatar, sender, _message, true, R.color.colorReciever));
             messageAdapter.notifyDataSetChanged();
             scroll();
-        }
-    }
-
-    //Tính toán điểm Q ở một luồng khác, nhưng đồng bộ với khung chat, chưa tính xong thì không thể chat
-    private class myAsyncTask extends AsyncTask<Void, Void, Void> {
-
-        //Thực hiện sau khi doInBackground xong
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            display.setEnabled(true);
-            inputMessage.setEnabled(true);
-            send.setEnabled(true);
-            progressBar.setVisibility(View.GONE);
-        }
-
-        //Khi myAsyncTask thực thi thì doInBackground chạy đầu tiên
-        @Override
-        protected Void doInBackground(Void... params) {
-            handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    do {
-                        Q = P.kPoint(E, Constants.secretkey.get(reciever));
-                        if (Q.isPOSITIVE_INFINITY()) {
-                            Constants.secretkey.put(reciever, Constants.secretkey.get(reciever).add(BigInteger.ONE));
-                        } else {
-                            break;
-                        }
-                    } while (true);
-                }
-            });
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            return null;
         }
     }
 
@@ -370,6 +384,9 @@ public class Chat extends AppCompatActivity {
                     JSONObject data = (JSONObject) args[0];
                     SupportFunctions supportFunctions = new SupportFunctions();
                     String _sender, _message, _avatar;
+                    Integer numNotification;
+                    int countNewMessage;
+                    int i = 0;
 
                     try {
                         _avatar = data.getString("avatar");
@@ -386,7 +403,7 @@ public class Chat extends AppCompatActivity {
                                 CipherText[j] = supportFunctions.paddingBin((new BigInteger(CipherText[j], 16)).toString(2), "0", protocols.maxblockbits);
                             }
                         }
-                        String messageDecrypted = protocols.Decrypt(E, Constants.secretkey.get(_sender), CipherText);
+                        final String messageDecrypted = protocols.Decrypt(E, Constants.secretkey.get(_sender), CipherText);
 
                         //Notify được thiết lập để lúc trở về giao diện ListBox, có thể cho biết
                         //ai đã nhắn tin.
@@ -409,9 +426,54 @@ public class Chat extends AppCompatActivity {
                             messageAdapter.notifyDataSetChanged();
                             scroll();
                         } else {
+                            String _nameSender = "";
+                            for(User u : Constants.userList){
+                                if(u.getuSocketID().equals(_sender)){
+                                    _nameSender = u.getuName();
+                                }
+                            }
+                            //Hiển thị tin nhắn từ một người không thuộc Chat Activity này
+                            final String final_nameSender = _nameSender;
+                            new CountDownTimer(5000, 500) {
+                                public void onTick(long millisUntilFinished) {
+                                    relativeLayoutNewMessage.setVisibility(View.VISIBLE);
+                                    if(relativeLayoutNewMessage.getBackground().getConstantState() == getResources().getDrawable(R.color.colorWhite).getConstantState()){
+                                        relativeLayoutNewMessage.setBackground(getResources().getDrawable(R.color.dsb_track_color));
+                                        newMessageNameSender.setTextColor(Color.parseColor("#FFFFFFFF"));
+                                        newMessageContent.setTextColor(Color.parseColor("#FFF0F0F0"));
+                                    }else{
+                                        relativeLayoutNewMessage.setBackground(getResources().getDrawable(R.color.colorWhite));
+                                        newMessageNameSender.setTextColor(getResources().getColor(R.color.dsb_track_color));
+                                        newMessageContent.setTextColor(getResources().getColor(R.color.dsb_ripple_color_pressed));
+                                    }
+                                    newMessageNameSender.setText(final_nameSender);
+                                    newMessageContent.setText(messageDecrypted);
+                                }
+
+                                public void onFinish() {
+                                    relativeLayoutNewMessage.setVisibility(View.INVISIBLE);
+                                    newMessageNameSender.setText("");
+                                    newMessageContent.setText("");
+                                }
+                            }.start();
                             //Ngược lại, thì vẫn nhận tin nhắn của các _sender khác gửi tới và
                             //số lượng tin nhắn từ _sender đó gửi.
-                            Constants.notify.put(_sender, Constants.notify.get(_sender) + 1);
+                            numNotification = Constants.notify.get(_sender);
+                            //Nếu lớn hơn 9 tin nhắn chưa đọc thì không cần thông báo nữa
+                            if (numNotification < 9) {
+                                Constants.notify.put(_sender, numNotification + 1);
+                                countNewMessage = Constants.notify.get(_sender).intValue();
+                                //Tìm kiếm vị trí của _sender trong mảng userList để lấy đúng vị trí chỉnh sửa trong userAdapter
+                                for (User u : Constants.userList) {
+                                    if (u.getuSocketID().equals(_sender)) {
+                                        Constants.userList.get(i).setuNumberNotification(countNewMessage);
+                                        Constants.userList.get(i).setuBackgroundNotification(R.drawable.notify);
+                                        Constants.userAdapter.notifyDataSetChanged();
+                                        break;
+                                    }
+                                    i++;
+                                }
+                            }
                         }
 
                     } catch (JSONException e) {
@@ -465,7 +527,7 @@ public class Chat extends AppCompatActivity {
 
                                 BigInteger secretKey = _publicKey.modPow(privateKey.get(_sender), _p);
                                 Constants.secretkey.put(_sender, secretKey);
-                                Toast.makeText(getApplicationContext(), secretKey + "", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Exchange Secret-key Success", Toast.LENGTH_LONG).show();
                                 privateKey.remove(_sender);
 
                             }
@@ -512,7 +574,7 @@ public class Chat extends AppCompatActivity {
                 @Override
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
-                    String userLeft, userLeftName;
+                    String userLeft;
                     int i = 0;
 
                     try {
@@ -528,14 +590,30 @@ public class Chat extends AppCompatActivity {
                         for (User u : Constants.userList) {
                             if (u.getuSocketID().equals(userLeft)) {
                                 Constants.userList.remove(i);
-                                Constants.message.remove(i);
-                                Constants.secretkey.remove(i);
-                                Constants.notify.remove(i);
-                                cancelCountDownTimer(userLeft);
                                 break;
                             }
                             i++;
                         }
+                        if(Constants.message.get(userLeft) != null){
+                            Constants.message.remove(userLeft);
+                        }
+                        if(Constants.secretkey.get(userLeft) != null) {
+                            Constants.secretkey.remove(userLeft);
+                        }
+                        if(Constants.notify.get(userLeft) != null) {
+                            Constants.notify.remove(userLeft);
+                        }
+                        if(Constants.Q.get(userLeft) != null) {
+                            Constants.Q.remove(userLeft);
+                        }
+                        cancelCountDownTimer(userLeft);
+                        if(Constants.countDownTimer.get(userLeft) != null){
+                            Constants.countDownTimer.remove(userLeft);
+                        }
+                        if(Constants.isTimerRunning.get(userLeft) != null){
+                            Constants.isTimerRunning.remove(userLeft);
+                        }
+
                     } catch (JSONException e) {
                         return;
                     }

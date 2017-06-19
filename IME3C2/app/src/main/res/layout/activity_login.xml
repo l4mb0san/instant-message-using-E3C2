@@ -85,7 +85,7 @@
                 android:layout_height="wrap_content"
                 app:dsb_thumbSize="10dp"
                 app:dsb_min="1"
-                app:dsb_max="30"
+                app:dsb_max="15"
                 app:dsb_value="5"/>
 
         </LinearLayout>
@@ -101,6 +101,16 @@
             android:textColor="@android:color/white"
             android:textStyle="bold"
             android:textSize="18dp"/>
+
+        <TextView
+            android:id="@+id/tv_status_login"
+            android:layout_marginTop="15dp"
+            android:layout_gravity="center"
+            android:visibility="invisible"
+            android:text="Status Login"
+            android:textColor="@android:color/holo_red_light"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
 
     </LinearLayout>
 

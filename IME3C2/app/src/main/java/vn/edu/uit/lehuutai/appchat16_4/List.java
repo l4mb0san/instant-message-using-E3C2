@@ -1,27 +1,18 @@
 package vn.edu.uit.lehuutai.appchat16_4;
 
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
-import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.Socket;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
-import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -34,11 +25,8 @@ import java.util.Map;
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.Chat.Message;
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.List.User;
 import vn.edu.uit.lehuutai.appchat16_4.Adapter.List.UserAdapter;
-import vn.edu.uit.lehuutai.appchat16_4.Crypto.EllipticCurve;
 import vn.edu.uit.lehuutai.appchat16_4.Crypto.Protocols;
 import vn.edu.uit.lehuutai.appchat16_4.Crypto.SupportFunctions;
-
-import static android.R.drawable.ic_notification_overlay;
 
 public class List extends AppCompatActivity {
 
@@ -47,9 +35,9 @@ public class List extends AppCompatActivity {
     private String mySocketID;
     private Map<String, BigInteger> privateKey;
     private BigInteger p, g;
+    private String[] object = null;
 
     Protocols protocols;
-    EllipticCurve E;
     ListView usersListView;
     ProgressBar progressBar;
     android.support.design.widget.FloatingActionButton floatingActionButtonHome;
@@ -74,6 +62,23 @@ public class List extends AppCompatActivity {
         mSocket.off("publickey exchange in listbox");
         mSocket.off("new user joined in ListActivity");
         mSocket.off("user left in ListActivity");
+    }
+
+    @Override
+    public void onBackPressed() {
+        mSocket.disconnect();
+        Constants.message.clear();
+        Constants.notify.clear();
+        Constants.secretkey.clear();
+        Constants.Q.clear();
+        for(User u : Constants.userList){
+            cancelCountDownTimer(u.getuSocketID());
+        }
+        Constants.countDownTimer.clear();
+        Constants.isTimerRunning.clear();
+        Constants.userList.clear();
+        finish();
+        System.exit(0);
     }
 
     //----------------------------------------------------------------------------------------
@@ -109,7 +114,6 @@ public class List extends AppCompatActivity {
         setTitle("Members");
         privateKey = new HashMap<String, BigInteger>();
         protocols = new Protocols();
-        E = Constants.E;
         //Danh sách các users đang trực tuyến
         Constants.userAdapter = new UserAdapter(
                 getApplicationContext(),
@@ -126,10 +130,17 @@ public class List extends AppCompatActivity {
         usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                //Khởi tạo một số thành phần
                 progressBar.setVisibility(View.VISIBLE);
+                usersListView.setEnabled(false);
+                usersListView.setBackground(getResources().getDrawable(R.color.dsb_disabled_color));
+                object = new String[3];
                 String socketID = Constants.userList.get(position).getuSocketID();
                 String avatar = Constants.userList.get(position).getuAvatar();
                 String name = Constants.userList.get(position).getuName();
+                object[0] = socketID;
+                object[1] = avatar;
+                object[2] = name;
 
                 //Xóa số lượng tin nhắn đi
                 if (Constants.notify.get(socketID) != null) {
@@ -166,30 +177,32 @@ public class List extends AppCompatActivity {
                         e.printStackTrace();
                     }
                     mSocket.emit("send PublicKey", jsonObjectSendPublicKey.toString());
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                } else {
+                    startChatActivity();
                 }
-
-                if (Constants.isTimerRunning.get(socketID) == null) {
-                    Constants.isTimerRunning.put(socketID, false);
-                }
-
-                if (!Constants.isTimerRunning.get(socketID)) {
-                    setCountDownTimer(Constants.timer, socketID);
-                }
-
-                Intent intent = new Intent(List.this, Chat.class);
-                intent.putExtra("avatar", avatar);
-                intent.putExtra("reciever", socketID);
-                intent.putExtra("reciever-name", name);
-                intent.putExtra("sender", mySocketID);
-                startActivity(intent);
-                finish();
             }
         });
+    }
+
+    //----------------------------------------------------------------------------------------
+    private void startChatActivity(){
+        String socketID = object[0];
+        String avatar = object[1];
+        String name = object[2];
+        computeQPoint(socketID);
+        if (Constants.isTimerRunning.get(socketID) == null) {
+            Constants.isTimerRunning.put(socketID, false);
+        }
+        if (!Constants.isTimerRunning.get(socketID)) {
+            setCountDownTimer(Constants.timer, socketID);
+        }
+        Intent intent = new Intent(List.this, Chat.class);
+        intent.putExtra("avatar", avatar);
+        intent.putExtra("reciever", socketID);
+        intent.putExtra("reciever-name", name);
+        intent.putExtra("sender", mySocketID);
+        startActivity(intent);
+        finish();
     }
 
     //----------------------------------------------------------------------------------------
@@ -199,9 +212,19 @@ public class List extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 mSocket.disconnect();
-                finish();
+                Constants.message.clear();
+                Constants.notify.clear();
+                Constants.secretkey.clear();
+                Constants.Q.clear();
+                for(User u : Constants.userList){
+                    cancelCountDownTimer(u.getuSocketID());
+                }
+                Constants.countDownTimer.clear();
+                Constants.isTimerRunning.clear();
+                Constants.userList.clear();
                 Intent intent = new Intent(List.this, Login.class);
                 startActivity(intent);
+                finish();
             }
         });
 
@@ -261,6 +284,20 @@ public class List extends AppCompatActivity {
                 .build();*/
     }
 
+    //----------------------------------------------------------------------------------------
+    private void computeQPoint(String reciever){
+        if (Constants.Q.get(reciever) == null) {
+            do {
+                Constants.Q.put(reciever, Constants.P.kPoint(Constants.E, Constants.secretkey.get(reciever)));
+                if (Constants.Q.get(reciever).isPOSITIVE_INFINITY()) {
+                    Constants.secretkey.put(reciever, Constants.secretkey.get(reciever).add(BigInteger.ONE));
+                } else {
+                    break;
+                }
+            } while (true);
+        }
+    }
+
     //---Thời gian đếm ngược để xóa mảng tin nhắn---------------------------------------------
     private void setCountDownTimer(final int militimes, final String recieverID) {
         if (Constants.countDownTimer.get(recieverID) == null) {
@@ -288,6 +325,7 @@ public class List extends AppCompatActivity {
                                         if (Constants.userList.get(i) != null) {
                                             Constants.userList.get(i).setuNumberNotification(0);
                                         }
+                                        break;
                                     }
                                     i++;
                                 }
@@ -338,15 +376,14 @@ public class List extends AppCompatActivity {
                         String[] CipherText = _message.substring(_message.indexOf(": ") + 2).split("[|]");
                         for (int j = 0; j < CipherText.length; j++) {
                             if (j == 0) {
-                                CipherText[j] = supportFunctions.paddingBin((new BigInteger(CipherText[j], 16)).toString(2), "0", BigInteger.valueOf(E.p.toString(2).length()*2));
+                                CipherText[j] = supportFunctions.paddingBin((new BigInteger(CipherText[j], 16)).toString(2), "0", BigInteger.valueOf(Constants.E.p.toString(2).length()*2));
                             } else {
                                 CipherText[j] = supportFunctions.paddingBin((new BigInteger(CipherText[j], 16)).toString(2), "0", protocols.maxblockbits);
                             }
                         }
-                        String messageDecrypted = protocols.Decrypt(E, Constants.secretkey.get(_sender), CipherText);
+                        String messageDecrypted = protocols.Decrypt(Constants.E, Constants.secretkey.get(_sender), CipherText);
 
-                        //Nếu _sender là người mới trò chuyện lần đầu thì sẽ khởi tạo mảng để chứa
-                        //chứa tin nhắn.
+                        //Nếu _sender là người mới trò chuyện lần đầu thì sẽ khởi tạo mảng để chứa tin nhắn.
                         if (Constants.message.get(_sender) == null) {
                             Constants.message.put(_sender, new ArrayList<Message>());
                         }
@@ -403,10 +440,9 @@ public class List extends AppCompatActivity {
                             if (Constants.secretkey.get(_sender) == null) {
                                 BigInteger secretKey = _publicKey.modPow(privateKey.get(_sender), p);
                                 Constants.secretkey.put(_sender, secretKey);
-                                Toast.makeText(getApplicationContext(), secretKey + "", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Exchange Secret-key Success", Toast.LENGTH_SHORT).show();
                                 privateKey.remove(_sender);
                             }
-                            return;
                         } else {
                             _g = new BigInteger(data.getString("g"));
                             _p = new BigInteger(data.getString("p"));
@@ -432,12 +468,18 @@ public class List extends AppCompatActivity {
 
                                 BigInteger secretKey = _publicKey.modPow(privateKey.get(_sender), _p);
                                 Constants.secretkey.put(_sender, secretKey);
-                                Toast.makeText(getApplicationContext(), secretKey + "", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Exchange Secret-key Success", Toast.LENGTH_SHORT).show();
                                 privateKey.remove(_sender);
-
                             }
                         }
 
+                        //Tính điểm Q từ private key đã trao đổi
+                        computeQPoint(_sender);
+
+                        //Thiết lập bộ countdownTimer và chuyển sang Chat Activity
+                        if(object != null && object.length > 0){
+                            startChatActivity();
+                        }
                     } catch (JSONException e) {
                         return;
                     }
@@ -490,14 +532,30 @@ public class List extends AppCompatActivity {
                             if (u.getuSocketID().equals(userLeft)) {
                                 Constants.userList.remove(i);
                                 Constants.userAdapter.notifyDataSetChanged();
-                                Constants.message.remove(i);
-                                Constants.secretkey.remove(i);
-                                Constants.notify.remove(i);
-                                cancelCountDownTimer(userLeft);
                                 break;
                             }
                             i++;
                         }
+                        if(Constants.message.get(userLeft) != null){
+                            Constants.message.remove(userLeft);
+                        }
+                        if(Constants.secretkey.get(userLeft) != null) {
+                            Constants.secretkey.remove(userLeft);
+                        }
+                        if(Constants.notify.get(userLeft) != null) {
+                            Constants.notify.remove(userLeft);
+                        }
+                        if(Constants.Q.get(userLeft) != null) {
+                            Constants.Q.remove(userLeft);
+                        }
+                        cancelCountDownTimer(userLeft);
+                        if(Constants.countDownTimer.get(userLeft) != null){
+                            Constants.countDownTimer.remove(userLeft);
+                        }
+                        if(Constants.isTimerRunning.get(userLeft) != null){
+                            Constants.isTimerRunning.remove(userLeft);
+                        }
+
                     } catch (JSONException e) {
                         return;
                     }
