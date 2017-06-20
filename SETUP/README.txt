@@ -1,0 +1,1 @@
+﻿Trước khi cài đặt ứng dụng này hãy gỡ bỏ phiên bản cài đặt trên máy trước đó để tránh bị xung đột, crash chương trình.

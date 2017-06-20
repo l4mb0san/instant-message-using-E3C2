@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Giám sát</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="monitor_handle1.js"></script>
+  <link rel="stylesheet" type="text/css" href="monitor_layout1.css" />
+</head>
+<body>
+
+<div class="container">
+  <h2>Giám Sát Kết Nối</h2>
+  <p>Giám sát các kết nối và thông điệp truyền nhận trên Server.</p>
+  <div class="row">
+  <div class="col-md-4">
+  <table class="table table-bordered" id="list-online-body">
+    <thead>
+      <tr>
+        <th style= "background-color: black; color: white">DANH SÁCH TRỰC TUYẾN</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>John</td>
+      </tr>
+      <tr>
+        <td>Mary</td>
+      </tr>
+      <tr>
+        <td>July</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="col-md-8">
+  <table class="table table-bordered" id="message-body">
+    <thead>
+      <tr>
+        <th style= "background-color: black; color: white">CÁC CUỘC TRÒ CHUYỆN ĐÃ MÃ HÓA</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>John</td>
+      </tr>
+      <tr>
+        <td>Mary</td>
+      </tr>
+      <tr>
+        <td>July</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  </div>
+</div>
+
+</body>
+</html>
