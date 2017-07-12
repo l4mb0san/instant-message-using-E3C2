@@ -16,7 +16,7 @@ public class Connection extends Application{
     {
         try {
             mSocket = IO.socket("https://anonymous-messaging-app.herokuapp.com");
-//            mSocket = IO.socket("http://192.168.0.102:1209");
+//            mSocket = IO.socket("http://192.168.237.1:1209");
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

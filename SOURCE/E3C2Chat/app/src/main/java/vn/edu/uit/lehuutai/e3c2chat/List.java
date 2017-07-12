@@ -36,6 +36,7 @@ public class List extends AppCompatActivity {
     private Map<String, BigInteger> privateKey;
     private BigInteger p, g;
     private String[] object = null;
+    private CountDownTimer sendPublicKeyTimeout;
 
     Protocols protocols;
     ListView usersListView;
@@ -132,6 +133,7 @@ public class List extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //Khởi tạo một số thành phần
                 progressBar.setVisibility(View.VISIBLE);
+                usersListView.setVisibility(View.VISIBLE);
                 usersListView.setEnabled(false);
                 usersListView.setBackground(getResources().getDrawable(R.color.dsb_disabled_color));
                 object = new String[3];
@@ -177,6 +179,18 @@ public class List extends AppCompatActivity {
                         e.printStackTrace();
                     }
                     mSocket.emit("send PublicKey", jsonObjectSendPublicKey.toString());
+                    sendPublicKeyTimeout = new CountDownTimer(15000, 1000) {
+                        @Override
+                        public void onTick(long millisUntilFinished) {
+
+                        }
+
+                        @Override
+                        public void onFinish() {
+                            progressBar.setVisibility(View.INVISIBLE);
+                            usersListView.setVisibility(View.INVISIBLE);
+                        }
+                    }.start();
                 } else {
                     startChatActivity();
                 }
@@ -432,6 +446,7 @@ public class List extends AppCompatActivity {
                     JSONObject data = (JSONObject) args[0];
                     String _sender;
                     BigInteger _p, _g, _publicKey;
+                    sendPublicKeyTimeout.cancel();
 
                     try {
                         _sender = data.getString("sender");
@@ -440,7 +455,7 @@ public class List extends AppCompatActivity {
                             if (Constants.secretkey.get(_sender) == null) {
                                 BigInteger secretKey = _publicKey.modPow(privateKey.get(_sender), p);
                                 Constants.secretkey.put(_sender, secretKey);
-                                Toast.makeText(getApplicationContext(), "Exchange Secret-key Success", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Exchange Key Success", Toast.LENGTH_SHORT).show();
                                 privateKey.remove(_sender);
                             }
                         } else {

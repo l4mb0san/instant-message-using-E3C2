@@ -67,7 +67,7 @@ public class Chat extends AppCompatActivity {
     ProgressBar progressBar;
     TextView userLeftNotification, newMessageNameSender, newMessageContent;
     CircleMenu circleMenu;
-    RelativeLayout relativeLayoutMenu, relativeLayoutNewMessage;
+    RelativeLayout Menu, relativeLayoutNewMessage;
     ImageView imageViewNewMessage;
 
 
@@ -182,7 +182,7 @@ public class Chat extends AppCompatActivity {
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         userLeftNotification = (TextView) findViewById(R.id.tv_userLeft);
         circleMenu = (CircleMenu) findViewById(R.id.circle_menu);
-        relativeLayoutMenu = (RelativeLayout) findViewById(R.id.RelativeLayoutMenu);
+        Menu = (RelativeLayout) findViewById(R.id.menu);
         relativeLayoutNewMessage = (RelativeLayout) findViewById(R.id.layout_new_message);
         newMessageNameSender = (TextView) findViewById(R.id.tv_new_message_name_sender);
         newMessageContent = (TextView) findViewById(R.id.tv_new_message_content);
@@ -294,7 +294,7 @@ public class Chat extends AppCompatActivity {
         });
 
 
-        relativeLayoutMenu.setOnLongClickListener(new View.OnLongClickListener() {
+        Menu.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 if (!hide) {
@@ -321,7 +321,7 @@ public class Chat extends AppCompatActivity {
     //----------------------------------------------------------------------------------------
     private void attempSend(){
         if(Constants.Q.get(reciever) == null) {
-            Toast.makeText(getApplicationContext(), "Not Exchange Secret-key", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "Not Exchange Key", Toast.LENGTH_LONG).show();
         }
         String _message = inputMessage.getText().toString();
         if (!_message.isEmpty()) {
@@ -536,7 +536,7 @@ public class Chat extends AppCompatActivity {
 
                                 BigInteger secretKey = _publicKey.modPow(privateKey.get(_sender), _p);
                                 Constants.secretkey.put(_sender, secretKey);
-                                Toast.makeText(getApplicationContext(), "Exchange Secret-key Success", Toast.LENGTH_LONG).show();
+                                Toast.makeText(getApplicationContext(), "Exchange Key Success", Toast.LENGTH_LONG).show();
                                 privateKey.remove(_sender);
 
                             }
